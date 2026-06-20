@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1 Million Checkboxes</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Stencil:wght@700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --ink-navy: #142B3D;
+            --blueprint-line: #2E5572;
+            --paper: #F1ECDE;
+            --marker: #FF6B3D;
+            --graphite: #8AA0AE;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            min-height: 100%;
+        }
+
+        body {
+            background-color: var(--ink-navy);
+            background-image:
+                repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 40px),
+                repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 40px);
+            color: var(--paper);
+            font-family: 'JetBrains Mono', monospace;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .page {
+            max-width: 920px;
+            margin: 0 auto;
+            padding: 64px 24px 96px;
+        }
+
+        .masthead {
+            margin-bottom: 40px;
+        }
+
+        .kicker {
+            margin: 0 0 10px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--marker);
+        }
+
+        h1 {
+            margin: 0;
+            font-family: 'Big Shoulders Stencil', sans-serif;
+            font-weight: 900;
+            text-transform: uppercase;
+            font-size: clamp(3rem, 9vw, 6rem);
+            line-height: 0.88;
+            letter-spacing: 0.01em;
+            color: var(--paper);
+        }
+
+        .subtitle {
+            margin: 14px 0 0;
+            max-width: 38ch;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: var(--graphite);
+        }
+
+        .board {
+            position: relative;
+            border: 1px solid var(--blueprint-line);
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 36px;
+        }
+
+        .crop {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+        }
+
+        .crop::before,
+        .crop::after {
+            content: '';
+            position: absolute;
+            background: var(--graphite);
+        }
+
+        .crop::before {
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 1px;
+        }
+
+        .crop::after {
+            left: 50%;
+            top: 0;
+            width: 1px;
+            height: 100%;
+        }
+
+        .crop--tl { top: -8px; left: -8px; }
+        .crop--tr { top: -8px; right: -8px; }
+        .crop--bl { bottom: -8px; left: -8px; }
+        .crop--br { bottom: -8px; right: -8px; }
+
+        #container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
+            gap: 10px;
+        }
+
+        input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            margin: 0;
+            width: 38px;
+            height: 38px;
+            background: var(--paper);
+            border: 2px solid var(--blueprint-line);
+            border-radius: 4px;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+        }
+
+        input[type="checkbox"]:hover {
+            transform: translateY(-2px);
+            border-color: var(--marker);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        input[type="checkbox"]:active {
+            transform: translateY(0) scale(0.93);
+        }
+
+        input[type="checkbox"]:focus-visible {
+            outline: 2px solid var(--marker);
+            outline-offset: 3px;
+        }
+
+        input[type="checkbox"]::after {
+            content: '';
+            position: absolute;
+            inset: 5px;
+            clip-path: polygon(14% 44%, 0 65%, 38% 100%, 100% 16%, 86% 0%, 38% 71%);
+            background: var(--marker);
+            opacity: 0;
+            transform: scale(0.4) rotate(-12deg);
+        }
+
+        input[type="checkbox"]:checked {
+            border-color: var(--marker);
+        }
+
+        input[type="checkbox"]:checked::after {
+            opacity: 1;
+            animation: stamp 0.22s ease-out;
+        }
+
+        @keyframes stamp {
+            0%   { transform: scale(0.3) rotate(-18deg); opacity: 0; }
+            60%  { transform: scale(1.15) rotate(4deg); opacity: 1; }
+            100% { transform: scale(1) rotate(-6deg); opacity: 1; }
+        }
+
+        @media (max-width: 480px) {
+            #container {
+                grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
+                gap: 8px;
+            }
+            input[type="checkbox"] {
+                width: 30px;
+                height: 30px;
+            }
+            .board {
+                padding: 24px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                transition: none !important;
+                animation: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <header class="masthead">
+            <p class="kicker">Field Survey — Grid No. 0001</p>
+            <h1>Checkboxes</h1>
+            <p class="subtitle">Every square below is unmarked. Tick what's done.</p>
+        </header>
+
+        <div class="board">
+            <span class="crop crop--tl" aria-hidden="true"></span>
+            <span class="crop crop--tr" aria-hidden="true"></span>
+            <span class="crop crop--bl" aria-hidden="true"></span>
+            <span class="crop crop--br" aria-hidden="true"></span>
+            <div id="container"></div>
+        </div>
+    </div>
+    <script src="/socket.io/socket.io.js "></script>
+    <script>
+        const socket = io();
+        const container = document.getElementById('container');
+        const CHECKBOX_COUNT = 100;
+
+        socket.on('server:checkbox:change', (data) => {
+            console.log(`Socket Server Event`, data); 
+            const {index, checked} = data;  
+
+            const input = document.getElementById(`checkbox-${index}`);
+
+            if(input) {
+                input.checked = checked;
+            }
+
+        });
+
+        window.addEventListener('load', async() => {
+            const response = await fetch('/checkboxes', {method:'GET'});
+            const data = await response.json();
+
+            if(data && data.checkboxes) {
+                console.log("here");
+                data.checkboxes.forEach((serverValue, index) => {
+                    const input = document.createElement('input');
+
+                    input.type = 'checkbox'
+                    input.id = `checkbox-${index}`;
+                    input.checked = serverValue;
+            
+                    input.addEventListener('change', event => {
+                        const checked = event.target.checked;
+                        console.log('Checkbox Changed', {index, checked});
+                        socket.emit('client:checkbox:change', {index, checked}); //telling socket server what is happening
+                    });
+                    container.appendChild(input);
+                });
+            }
+        });
+
+    </script>
+</body>
+</html>
