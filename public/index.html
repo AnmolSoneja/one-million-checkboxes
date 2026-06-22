@@ -189,6 +189,94 @@
             }
         }
 
+        /* ---- Error alert (toast) ---- */
+
+        .alert-stack {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 999;
+            width: min(440px, 92vw);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: none;
+        }
+
+        .alert {
+            pointer-events: auto;
+            position: relative;
+            background: var(--ink-navy);
+            border: 2px solid var(--marker);
+            border-radius: 3px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            animation: alert-in 0.25s ease-out;
+        }
+
+        .alert--leaving {
+            animation: alert-out 0.2s ease-in forwards;
+        }
+
+        .alert-bar {
+            height: 6px;
+            background: repeating-linear-gradient(45deg, var(--marker) 0 10px, var(--ink-navy) 10px 20px);
+        }
+
+        .alert-body {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 14px 16px 16px;
+        }
+
+        .alert-tag {
+            flex-shrink: 0;
+            margin-top: 2px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--marker);
+            border: 1px solid var(--marker);
+            padding: 3px 6px;
+            border-radius: 2px;
+        }
+
+        .alert-message {
+            flex: 1;
+            margin: 2px 0 0;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            color: var(--paper);
+        }
+
+        .alert-close {
+            flex-shrink: 0;
+            background: none;
+            border: none;
+            color: var(--graphite);
+            font-size: 1.2rem;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .alert-close:hover {
+            color: var(--marker);
+        }
+
+        @keyframes alert-in {
+            from { opacity: 0; transform: translateY(-12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes alert-out {
+            from { opacity: 1; transform: translateY(0); }
+            to   { opacity: 0; transform: translateY(-8px); }
+        }
+
         @media (prefers-reduced-motion: reduce) {
             * {
                 transition: none !important;
@@ -198,6 +286,8 @@
     </style>
 </head>
 <body>
+    <div class="alert-stack" id="alert-stack" aria-live="assertive"></div>
+
     <div class="page">
         <header class="masthead">
             <p class="kicker">Field Survey — Grid No. 0001</p>
@@ -213,11 +303,45 @@
             <div id="container"></div>
         </div>
     </div>
+    <script>
+        // New helper, separate from your socket/checkbox logic below.
+        // Builds and shows one dismissible error alert in the #alert-stack.
+        function showErrorAlert(message) {
+            const stack = document.getElementById('alert-stack');
+
+            const el = document.createElement('div');
+            el.className = 'alert';
+            el.setAttribute('role', 'alert');
+            el.innerHTML = `
+                <div class="alert-bar"></div>
+                <div class="alert-body">
+                    <span class="alert-tag">Error Report</span>
+                    <p class="alert-message"></p>
+                    <button class="alert-close" aria-label="Dismiss">&times;</button>
+                </div>
+            `;
+            el.querySelector('.alert-message').textContent = message || 'Something went wrong.';
+            stack.appendChild(el);
+
+            const remove = () => {
+                el.classList.add('alert--leaving');
+                setTimeout(() => el.remove(), 200);
+            };
+
+            el.querySelector('.alert-close').addEventListener('click', remove);
+            setTimeout(remove, 6000);
+        }
+    </script>
     <script src="/socket.io/socket.io.js "></script>
     <script>
         const socket = io();
         const container = document.getElementById('container');
         const CHECKBOX_COUNT = 100;
+
+        socket.on('server:error', (data)=>{
+            const errorMessage = data.error;
+            showErrorAlert(errorMessage);
+        });
 
         socket.on('server:checkbox:change', (data) => {
             console.log(`Socket Server Event`, data); 
@@ -231,15 +355,19 @@
 
         });
 
-        window.addEventListener('load', async() => {
+        async function fetchStateFromServer() {
+            while(container.firstChild) {
+                container.removeChild(container.firstChild);
+            }
+            
             const response = await fetch('/checkboxes', {method:'GET'});
             const data = await response.json();
-
+    
             if(data && data.checkboxes) {
                 console.log("here");
                 data.checkboxes.forEach((serverValue, index) => {
                     const input = document.createElement('input');
-
+    
                     input.type = 'checkbox'
                     input.id = `checkbox-${index}`;
                     input.checked = serverValue;
@@ -248,10 +376,15 @@
                         const checked = event.target.checked;
                         console.log('Checkbox Changed', {index, checked});
                         socket.emit('client:checkbox:change', {index, checked}); //telling socket server what is happening
+                        fetchStateFromServer();
                     });
                     container.appendChild(input);
                 });
             }
+        }
+
+        window.addEventListener('load', async() => {
+            fetchStateFromServer();
         });
 
     </script>

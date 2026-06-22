@@ -5,7 +5,11 @@ import { Server } from "socket.io"
 import { publisher, subscriber, redis } from "./redis-connection.js";
 
 const CHECKBOX_SIZE = 100;
-const CHECKBOX_STATE_KEY = 'checkbox-state'
+const CHECKBOX_STATE_KEY = 'checkbox-state';
+
+const rateLimitingHashmap = new Map();
+
+//socket.id, timestamp
 
 //socket io use karna hai isiliye http use karenege usse server banayenge
 async function main() {
@@ -31,6 +35,19 @@ async function main() {
         
         socket.on('client:checkbox:change', async (data)=>{
             console.log(`[Socket:${socket.id}]:client:checkbox:change`, data);
+
+            // const lastOperationTime = rateLimitingHashmap.get(socket.id);
+            const lastOperationTime = await redis.get(`rate-limiting-${socket.id}`);
+            if(lastOperationTime) {
+                const timeElapsed = Date.now() - lastOperationTime;
+                if(timeElapsed < 5.5*1000) {
+                    socket.emit('server:error', {error: `Please wait!`});
+                    return;
+                }
+            }
+            // rateLimitingHashmap.set(socket.id, Date.now());
+            await redis.set(`rate-limiting-${socket.id}`, Date.now());
+            
 
             const existingState = await redis.get(CHECKBOX_STATE_KEY);
             
